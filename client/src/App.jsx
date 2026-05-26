@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import './App.css'
 
 function App() {
@@ -8,12 +9,21 @@ function App() {
   const [weight, setWeight] = useState('')
   const [log, setLog] = useState([])
 
+  // get workouts when page loads
+  useEffect(() => {
+    axios.get('http://localhost:3000/workouts')
+      .then(res => setLog(res.data))
+  }, [])
+
   const addWorkout = () => {
-    setLog([...log, { exercise, sets, reps, weight }])
-    setExercise('')
-    setSets('')
-    setReps('')
-    setWeight('')
+    axios.post('http://localhost:3000/workouts', { exercise, sets, reps, weight })
+      .then(res => {
+        setLog(res.data)
+        setExercise('')
+        setSets('')
+        setReps('')
+        setWeight('')
+      })
   }
 
   return (
