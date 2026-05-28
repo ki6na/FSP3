@@ -1,5 +1,7 @@
 const express = require('express')
 const cors = require('cors')
+const mongoose = require('mongoose')
+const Workout = require('./schema/workout')
 
 const app = express()
 const port = 3000
@@ -7,18 +9,38 @@ const port = 3000
 app.use(cors())
 app.use(express.json())
 
-// temporary array until we set up mongodb
-let workouts = []
+// connect to mongodb
+mongoose.connect('mongodb://127.0.0.1:27017/workouttracker')
+  .then(() => {
+    console.log('MongoDB connected')
+    app.listen(port, () => console.log(`server running on port ${port}`))
+  })
+  .catch(err => console.log('connection error:', err))
 
 // get all workouts
 app.get('/workouts', (req, res) => {
-  res.json(workouts)
+  Workout.find().sort({ createdAt: -1 })
+    .then(workouts => res.json(workouts))
 })
 
 // add a workout
 app.post('/workouts', (req, res) => {
-  workouts.push(req.body)
-  res.json(workouts)
+  const newWorkout = new Workout(req.body)
+  newWorkout.save()
+    .then(() => Workout.find().sort({ createdAt: -1 }))
+    .then(workouts => res.json(workouts))
 })
 
-app.listen(port, () => console.log(`server running on port ${port}`))
+// update a workout
+app.put('/workouts/:id', (req, res) => {
+  Workout.findByIdAndUpdate(req.params.id, req.body)
+    .then(() => Workout.find().sort({ createdAt: -1 }))
+    .then(workouts => res.json(workouts))
+})
+
+// delete a workout
+app.delete('/workouts/:id', (req, res) => {
+  Workout.findByIdAndDelete(req.params.id)
+    .then(() => Workout.find().sort({ createdAt: -1 }))
+    .then(workouts => res.json(workouts))
+})
